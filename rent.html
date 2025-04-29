@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>책 대여</title>
+  <style>
+    .clickable { color: red; cursor: pointer; }
+    .unclickable { color: gray; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <h1>📚 책 대여</h1>
+  <p class="clickable" onclick="rentBook('생각의 연금술')">생각의 연금술 – 제임스 알렌</p>
+  <p class="unclickable">해피엔딩 – 조현선 (홍길동, 5일 남음)</p>
+
+  <div id="form" style="display:none;">
+    <h2>대여 신청</h2>
+    <form onsubmit="submitForm(event)">
+      이름: <input type="text" required><br>
+      소속: <input type="text" required><br>
+      대여일: <input type="date" value="2025-04-29" readonly><br>
+      비밀번호(4자리): <input type="password" maxlength="4" required><br>
+      <button type="submit">대여 신청</button>
+    </form>
+  </div>
+
+  <script>
+    function rentBook(title) {
+      document.getElementById("form").style.display = "block";
+    }
+    function submitForm(e) {
+      e.preventDefault();
+      alert("반납일은 2025-05-19 입니다. 감사합니다!");
+      window.location.href = "list.html";
+    }
+  </script>
+</body>
+</html>
