@@ -2,16 +2,14 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>책 반납</title>
+  <title>책 대여</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    .returnable { color: blue; cursor: pointer; }
+    .clickable { color: red; cursor: pointer; }
+    .unclickable { color: gray; cursor: not-allowed; }
   </style>
-
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js"></script>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyA8JDO1tZba-PE5djiG72o8LoU-e_absPU",
@@ -21,63 +19,47 @@
       messagingSenderId: "233876020916",
       appId: "1:233876020916:web:e32930ebc6e920103a41e1"
     };
-
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    let currentDoc = null;
-
-    window.onload = async function() {
-      const list = document.getElementById("return-list");
-      const snapshot = await db.collection("books").where("available", "==", false).get();
-
-      snapshot.forEach(doc => {
-        const book = doc.data();
-        const p = document.createElement("p");
-        p.className = "returnable";
-        p.textContent = `${book.title} – ${book.author}`;
-        p.onclick = () => {
-          currentDoc = doc;
-          document.getElementById("pw-section").style.display = "block";
-        };
-        list.appendChild(p);
-      });
+    async function rentBook(title) {
+      const docRef = await db.collection("books").where("title", "==", title).get();
+      if (docRef.empty) return alert("책을 찾을 수 없습니다");
+      const doc = docRef.docs[0];
+      const book = doc.data();
+      if (!book.available) return alert("이미 대여 중인 책입니다.");
+      document.getElementById("form-section").style.display = "block";
+      document.getElementById("book-title").innerText = title;
+      window.currentDocId = doc.id;
     }
-
-    async function checkPassword(event) {
+    async function submitForm(event) {
       event.preventDefault();
-      const inputPw = document.getElementById("pw").value;
-      const data = currentDoc.data();
-
-      if (inputPw !== data.password) {
-        alert("비밀번호가 틀렸습니다.");
-        return;
-      }
-
-      const confirmResult = confirm(`${data.borrower} / 반납하시겠습니까?`);
-      if (!confirmResult) return;
-
-      await db.collection("books").doc(currentDoc.id).update({
-        available: true,
-        borrower: firebase.firestore.FieldValue.delete(),
-        daysLeft: firebase.firestore.FieldValue.delete(),
-        password: firebase.firestore.FieldValue.delete()
+      const name = document.getElementById("name").value;
+      const org = document.getElementById("org").value;
+      const pw = document.getElementById("pw").value;
+      const today = new Date();
+      const returnDate = new Date();
+      returnDate.setDate(today.getDate() + 20);
+      await db.collection("books").doc(window.currentDocId).update({
+        available: false,
+        borrower: name,
+        password: pw,
+        daysLeft: 20
       });
-
-      alert(`${new Date().toLocaleDateString()}자로 반납이 완료되었습니다. 감사합니다!`);
+      alert(`반납일은 ${returnDate.toLocaleDateString()} 입니다. 감사합니다!`);
       window.location.href = "list.html";
     }
   </script>
 </head>
 <body>
-  <h1>📗 책 반납</h1>
-  <div id="return-list">
-    <!-- 대여 중인 책 리스트가 나타납니다 -->
-  </div>
-
-  <div id="pw-section" style="display:none;">
-    <form onsubmit="checkPassword(event)">
-      비밀번호 입력: <input type="password" id="pw" maxlength="4" required>
-      <button type="submit">확인</button>
+  <h1>📕 책 대여</h1>
+  <p class="clickable" onclick="rentBook('생각의 연금술')">생각의 연금술 – 제임스 알렌</p>
+  <div id="form-section" style="display:none;">
+    <h2 id="book-title"></h2>
+    <form onsubmit="submitForm(event)">
+      이름: <input type="text" id="name" required><br>
+      소속: <input type="text" id="org" required><br>
+      비밀번호(4자리): <input type="password" id="pw" maxlength="4" required><br>
+      <button type="submit">대여 신청</button>
     </form>
   </div>
 </body>
